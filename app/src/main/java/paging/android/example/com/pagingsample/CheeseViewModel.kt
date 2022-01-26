@@ -36,7 +36,7 @@ class CheeseViewModel(private val dao: CheeseDaoLocal) : ViewModel() {
     val allCheeses: Flow<PagingData<CheeseListItem>> = Pager(
         config = PagingConfig(
             pageSize = pageSize,
-            enablePlaceholders = false,
+            enablePlaceholders = true,
             maxSize = 90
         )
     ) {
