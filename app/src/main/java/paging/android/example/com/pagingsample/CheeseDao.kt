@@ -68,11 +68,8 @@ class CheeseDaoLocal {
         fun max(a: Int, b: Int): Int = if (a > b) a else b
 
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-            val lastPos = dao.count() - 1
-            val key = state.anchorPosition?.let { anchorPosition ->
-                val anchorPage = state.closestPageToPosition(anchorPosition)
-                anchorPage?.prevKey?.plus(pageSize)?.coerceAtMost(lastPos) ?: anchorPage?.nextKey?.minus(pageSize)?.coerceAtLeast(0)
-            }
+            val key = state.anchorPosition
+            Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
             return key
         }
 
