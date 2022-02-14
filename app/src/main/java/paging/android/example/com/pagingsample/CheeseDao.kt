@@ -67,25 +67,60 @@ class CheeseDaoLocal {
     private class CheeseDataSource(val dao: CheeseDaoLocal, val pageSize: Int): PagingSource<Int, Cheese>() {
         fun max(a: Int, b: Int): Int = if (a > b) a else b
 
+//        override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
+//            val lastPos = dao.count() - 1
+//            val key = state.anchorPosition?.let { anchorPosition ->
+//                val anchorPage = state.closestPageToPosition(anchorPosition)
+//                anchorPage?.prevKey?.plus(pageSize)?.coerceAtMost(lastPos) ?: anchorPage?.nextKey?.minus(pageSize)?.coerceAtLeast(0)
+//            }
+//            return key
+//        }
+
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-            val lastPos = dao.count() - 1
-            val key = state.anchorPosition?.let { anchorPosition ->
-                val anchorPage = state.closestPageToPosition(anchorPosition)
-                anchorPage?.prevKey?.plus(pageSize)?.coerceAtMost(lastPos) ?: anchorPage?.nextKey?.minus(pageSize)?.coerceAtLeast(0)
-            }
+            val key = state.anchorPosition
+            Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
             return key
         }
 
         override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Cheese> {
             val pageNumber = params.key ?: 0
-            val count = dao.count()
-            val data = dao.allCheesesOrdName().drop(pageNumber).take(pageSize)
+            val allCheses = dao.allCheesesOrdName()
+            val count = allCheses.size
+            val data = allCheses.drop(pageNumber).take(params.loadSize)
             return LoadResult.Page(
                 data = data,
                 prevKey = if (pageNumber > 0) max(0, pageNumber - pageSize) else null,
-                nextKey = if (pageNumber + pageSize < count) pageNumber + pageSize else null
-            )
+                nextKey = if (pageNumber + data.size < count) pageNumber + data.size else null,
+                itemsBefore = pageNumber,
+                itemsAfter = maxOf(0, count - pageNumber - data.size),
+            ).also {
+                val first = data.firstOrNull()?.id
+                val p = params::class.simpleName?.first()
+                Log.d("CHEESE_SRC", "load($p key=${params.key}, loadSize=${params.loadSize}) -> ${it.prevKey} / ${it.nextKey}, ${it.itemsBefore} / ${it.itemsAfter}, data=$first (${data.count()})")
+            }
         }
+        /*
+        override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Cheese> {
+            val pageNumber = params.key ?: 0
+//            val count = dao.count()
+//            val data = dao.allCheesesOrdName().drop(pageNumber).take(pageSize)
+            val allCheses = dao.allCheesesOrdName()
+            val count = allCheses.size
+            val data = allCheses.drop(pageNumber).take(params.loadSize)
+            return LoadResult.Page(
+                data = data,
+                prevKey = if (pageNumber > 0) max(0, pageNumber - pageSize) else null,
+                nextKey = if (pageNumber + pageSize < count) pageNumber + pageSize else null,
+                itemsBefore = pageNumber,
+                itemsAfter = maxOf(0, count - pageNumber - data.size),
+            ).also {
+                val first = data.firstOrNull()?.id
+                val p = params::class.simpleName?.first()
+                Log.d("CHEESE_SRC", "load($p key=${params.key}, loadSize=${params.loadSize}) -> ${it.prevKey} / ${it.nextKey}, ${it.itemsBefore} / ${it.itemsAfter}, data=$first (${data.count()})")
+            }
+        }
+
+         */
     }
 
 }

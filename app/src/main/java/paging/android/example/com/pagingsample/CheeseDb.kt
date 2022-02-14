@@ -27,7 +27,7 @@ class CheeseDb {
 
     init {
         MainScope().launch(Dispatchers.IO) {
-            for (item in CHEESE_DATA.take(122)
+            for (item in CHEESE_DATA.take(351)
                 .map { Cheese(name = it) }) {
                 dao.insert(item)
             }
