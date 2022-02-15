@@ -73,11 +73,20 @@ class CheeseDaoLocal {
 //                val anchorPage = state.closestPageToPosition(anchorPosition)
 //                anchorPage?.prevKey?.plus(pageSize)?.coerceAtMost(lastPos) ?: anchorPage?.nextKey?.minus(pageSize)?.coerceAtLeast(0)
 //            }
+//            Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
+//            return key
+//        }
+
+//        override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
+//            val key = state.anchorPosition
+//            Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
 //            return key
 //        }
 
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-            val key = state.anchorPosition
+            val key = state.anchorPosition?.let {
+                maxOf(0, it - state.config.initialLoadSize / 2)
+            }
             Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
             return key
         }
