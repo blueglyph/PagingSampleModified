@@ -24,16 +24,16 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 
 /**
- * Database Access Object for the Cheese database.
+ * Database Access Object mock code for  a locally-generated data source.
+ * In reality, [_data] and [data] are never entirely loaded into memory.
  */
 class CheeseDaoLocal {
     private val _data = ArrayMap<Int, Cheese>()
     val data = MutableLiveData <Map<Int, Cheese>>(_data)
     val sortedData = data.map { data -> data.values.sortedBy { it.name.lowercase() } }
 
-    suspend fun allCheesesOrdName(): List<Cheese> {
-        return sortedData.value ?: listOf()
-    }
+    suspend fun sliceCheeseOrdName(offset: Int, size: Int): List<Cheese> =
+        (sortedData.value ?: listOf()).drop(offset).take(size)
 
     suspend fun insert(cheeses: List<Cheese>) {
         for (item in cheeses)
@@ -67,22 +67,6 @@ class CheeseDaoLocal {
     private class CheeseDataSource(val dao: CheeseDaoLocal, val pageSize: Int): PagingSource<Int, Cheese>() {
         fun max(a: Int, b: Int): Int = if (a > b) a else b
 
-//        override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-//            val lastPos = dao.count() - 1
-//            val key = state.anchorPosition?.let { anchorPosition ->
-//                val anchorPage = state.closestPageToPosition(anchorPosition)
-//                anchorPage?.prevKey?.plus(pageSize)?.coerceAtMost(lastPos) ?: anchorPage?.nextKey?.minus(pageSize)?.coerceAtLeast(0)
-//            }
-//            Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
-//            return key
-//        }
-
-//        override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-//            val key = state.anchorPosition
-//            Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
-//            return key
-//        }
-
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
             val key = state.anchorPosition?.let {
                 maxOf(0, it - state.config.initialLoadSize / 2)
@@ -93,9 +77,9 @@ class CheeseDaoLocal {
 
         override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Cheese> {
             val pageNumber = params.key ?: 0
-            val allCheses = dao.allCheesesOrdName()
-            val count = allCheses.size
-            val data = allCheses.drop(pageNumber).take(params.loadSize)
+            // Condition: dao content does not vary between these two lines:
+            val count = dao.count()
+            val data = dao.sliceCheeseOrdName(pageNumber, params.loadSize)
             return LoadResult.Page(
                 data = data,
                 prevKey = if (pageNumber > 0) max(0, pageNumber - pageSize) else null,
@@ -108,28 +92,6 @@ class CheeseDaoLocal {
                 Log.d("CHEESE_SRC", "load($p key=${params.key}, loadSize=${params.loadSize}) -> ${it.prevKey} / ${it.nextKey}, ${it.itemsBefore} / ${it.itemsAfter}, data=$first (${data.count()})")
             }
         }
-        /*
-        override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Cheese> {
-            val pageNumber = params.key ?: 0
-//            val count = dao.count()
-//            val data = dao.allCheesesOrdName().drop(pageNumber).take(pageSize)
-            val allCheses = dao.allCheesesOrdName()
-            val count = allCheses.size
-            val data = allCheses.drop(pageNumber).take(params.loadSize)
-            return LoadResult.Page(
-                data = data,
-                prevKey = if (pageNumber > 0) max(0, pageNumber - pageSize) else null,
-                nextKey = if (pageNumber + pageSize < count) pageNumber + pageSize else null,
-                itemsBefore = pageNumber,
-                itemsAfter = maxOf(0, count - pageNumber - data.size),
-            ).also {
-                val first = data.firstOrNull()?.id
-                val p = params::class.simpleName?.first()
-                Log.d("CHEESE_SRC", "load($p key=${params.key}, loadSize=${params.loadSize}) -> ${it.prevKey} / ${it.nextKey}, ${it.itemsBefore} / ${it.itemsAfter}, data=$first (${data.count()})")
-            }
-        }
-
-         */
     }
 
 }

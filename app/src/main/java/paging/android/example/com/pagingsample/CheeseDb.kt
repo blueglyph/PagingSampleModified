@@ -31,7 +31,7 @@ class CheeseDb {
                 .map { Cheese(name = it) }) {
                 dao.insert(item)
             }
-            Log.d("CHEESE", "DB contains ${dao.allCheesesOrdName().count()} item(s)")
+            Log.d("CHEESE", "DB contains ${dao.count()} item(s)")
         }
     }
 
