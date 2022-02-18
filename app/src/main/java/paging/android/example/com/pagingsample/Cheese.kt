@@ -24,7 +24,7 @@ data class Cheese(
     val name: String
 ) {
     companion object {
-        private var nextId = 1
+        private var nextId = 0
 
         private fun getId() = nextId++
     }

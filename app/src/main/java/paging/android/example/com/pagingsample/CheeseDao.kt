@@ -70,8 +70,6 @@ class CheeseDaoLocal {
         override val jumpingSupported: Boolean
             get() = true
 
-        fun max(a: Int, b: Int): Int = if (a > b) a else b
-
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
             val key = state.anchorPosition?.let {
                 maxOf(0, it - state.config.initialLoadSize / 2)
@@ -88,7 +86,7 @@ class CheeseDaoLocal {
             val isRefresh = params is LoadParams.Refresh
             return LoadResult.Page(
                 data = data,
-                prevKey = if (pageNumber > 0) max(0, pageNumber - pageSize) else null,
+                prevKey = if (pageNumber > 0) maxOf(0, pageNumber - pageSize) else null,
                 nextKey = if (pageNumber + data.size < count) pageNumber + data.size else null,
                 itemsBefore = if (isRefresh) pageNumber else UNDEF,
                 itemsAfter = if (isRefresh) maxOf(0, count - pageNumber - data.size) else UNDEF,
