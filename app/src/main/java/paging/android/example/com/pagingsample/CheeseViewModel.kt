@@ -37,7 +37,8 @@ class CheeseViewModel(private val dao: CheeseDaoLocal) : ViewModel() {
         config = PagingConfig(
             pageSize = pageSize,
             enablePlaceholders = false,
-            maxSize = 90
+            maxSize = 90,
+            jumpThreshold = 10
         )
     ) {
         dataSource = dao.getDataSource(pageSize)

@@ -65,6 +65,10 @@ class CheeseDaoLocal {
     }
 
     private class CheeseDataSource(val dao: CheeseDaoLocal, val pageSize: Int): PagingSource<Int, Cheese>() {
+
+        override val jumpingSupported: Boolean
+            get() = true
+
         fun max(a: Int, b: Int): Int = if (a > b) a else b
 
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
