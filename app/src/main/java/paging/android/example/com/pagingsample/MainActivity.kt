@@ -17,12 +17,15 @@
 package paging.android.example.com.pagingsample
 
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -38,6 +41,11 @@ class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
         private set
     private val viewModel by viewModels<CheeseViewModel> { CheeseViewModelFactory(application) }
+    private lateinit var layoutManager: LinearLayoutManager
+    private lateinit var adapter: CheeseAdapter
+    private var firstPos = CheeseDaoLocal.NO_POSITION
+
+    private val pagesUpdatedListener: () -> Unit = { initScroll() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,8 +53,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Create adapter for the RecyclerView
-        val adapter = CheeseAdapter()
+        adapter = CheeseAdapter()
         binding.cheeseList.adapter = adapter
+        layoutManager = binding.cheeseList.layoutManager as LinearLayoutManager
 
         // Subscribe the adapter to the ViewModel, so the items in the adapter are refreshed
         // when the list changes
@@ -54,8 +63,20 @@ class MainActivity : AppCompatActivity() {
             viewModel.allCheeses.collectLatest { adapter.submitData(it) }
         }
 
+        adapter.addOnPagesUpdatedListener(pagesUpdatedListener)
+
         initAddButtonListener()
         initSwipeToDelete()
+    }
+
+    private fun initScroll() {
+        // TODO: does not work
+        if (firstPos != CheeseDaoLocal.NO_POSITION) {
+            val relPos = firstPos - adapter.snapshot().placeholdersBefore
+            Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: relative pos = $firstPos - ${adapter.snapshot().placeholdersBefore} = $relPos")
+            layoutManager.scrollToPositionWithOffset(relPos, 0)
+        }
+        firstPos = CheeseDaoLocal.NO_POSITION
     }
 
     private fun initSwipeToDelete() {
@@ -94,9 +115,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun jumpToPosition(position: Int) {
+        firstPos = position
+        viewModel.jumpToPosition(position)
+    }
+
     private fun initAddButtonListener() {
         binding.addButton.setOnClickListener {
             addCheese()
+        }
+        binding.jumpButton.setOnClickListener {
+            binding.inputText.text.toString().toIntOrNull()?.let { jumpToPosition(it) }
         }
 
         // when the user taps the "Done" button in the on screen keyboard, save the item.

@@ -29,10 +29,9 @@ import kotlinx.coroutines.launch
  * A simple [AndroidViewModel] that provides a [Flow]<[PagingData]> of delicious cheeses.
  */
 class CheeseViewModel(private val dao: CheeseDaoLocal) : ViewModel() {
-
     val pageSize = 30
     var dataSource: PagingSource<Int, Cheese>? = null
-
+    var firstPos = CheeseDaoLocal.NO_POSITION
     val allCheeses: Flow<PagingData<CheeseListItem>> = Pager(
         config = PagingConfig(
             pageSize = pageSize,
@@ -41,7 +40,8 @@ class CheeseViewModel(private val dao: CheeseDaoLocal) : ViewModel() {
             jumpThreshold = 30
         )
     ) {
-        dataSource = dao.getDataSource(pageSize)
+        dataSource = dao.getDataSource(pageSize, firstPos)
+        firstPos = CheeseDaoLocal.NO_POSITION
         dataSource!!
     }.flow
         .map { pagingData ->
@@ -69,5 +69,10 @@ class CheeseViewModel(private val dao: CheeseDaoLocal) : ViewModel() {
             dao.delete(cheese)
 //            dataSource.invalidate()
         }
+    }
+
+    fun jumpToPosition(position: Int) {
+        firstPos = position
+        dataSource?.invalidate()
     }
 }

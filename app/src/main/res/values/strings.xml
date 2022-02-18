@@ -18,4 +18,5 @@
     <string name="app_name">PagingSample</string>
     <string name="add_cheese">add cheese</string>
     <string name="add">add</string>
+    <string name="jump">jump</string>
 </resources>

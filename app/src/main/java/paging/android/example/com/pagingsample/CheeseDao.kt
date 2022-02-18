@@ -28,6 +28,10 @@ import androidx.paging.PagingState
  * In reality, [_data] and [data] are never entirely loaded into memory.
  */
 class CheeseDaoLocal {
+    companion object {
+        val UNDEF = -2147483648
+        const val NO_POSITION = -1
+    }
     private val _data = ArrayMap<Int, Cheese>()
     val data = MutableLiveData <Map<Int, Cheese>>(_data)
     val sortedData = data.map { data -> data.values.sortedBy { it.name.lowercase() } }
@@ -59,21 +63,23 @@ class CheeseDaoLocal {
 
     fun count() = _data.count()
 
-    fun getDataSource(pageSize: Int): PagingSource<Int, Cheese> {
-        val source = CheeseDataSource(this, pageSize)
+    fun getDataSource(pageSize: Int, firstPosition: Int = NO_POSITION): PagingSource<Int, Cheese> {
+        val source = CheeseDataSource(this, pageSize, firstPosition)
         return source
     }
 
-    private class CheeseDataSource(val dao: CheeseDaoLocal, val pageSize: Int): PagingSource<Int, Cheese>() {
-        val UNDEF = -2147483648
+    private class CheeseDataSource(
+        val dao: CheeseDaoLocal,
+        val pageSize: Int,
+        var firstPosition: Int = NO_POSITION
+    ): PagingSource<Int, Cheese>() {
 
         override val jumpingSupported: Boolean
             get() = true
 
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-            val key = state.anchorPosition?.let {
-                maxOf(0, it - state.config.initialLoadSize / 2)
-            }
+            val position = if (firstPosition != NO_POSITION) firstPosition else state?.anchorPosition ?: 0
+            val key = maxOf(0, position - state.config.initialLoadSize / 2)
             Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
             return key
         }

@@ -36,6 +36,13 @@
             android:inputType="text"
             android:maxLines="1"/>
         <Button
+                android:id="@+id/jumpButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:layout_marginEnd="10dp"
+                android:text="@string/jump"/>
+        <Button
             android:id="@+id/addButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
