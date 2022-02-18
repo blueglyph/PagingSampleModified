@@ -65,6 +65,7 @@ class CheeseDaoLocal {
     }
 
     private class CheeseDataSource(val dao: CheeseDaoLocal, val pageSize: Int): PagingSource<Int, Cheese>() {
+        val UNDEF = -2147483648
 
         override val jumpingSupported: Boolean
             get() = true
@@ -84,12 +85,13 @@ class CheeseDaoLocal {
             // Condition: dao content does not vary between these two lines:
             val count = dao.count()
             val data = dao.sliceCheeseOrdName(pageNumber, params.loadSize)
+            val isRefresh = params is LoadParams.Refresh
             return LoadResult.Page(
                 data = data,
                 prevKey = if (pageNumber > 0) max(0, pageNumber - pageSize) else null,
                 nextKey = if (pageNumber + data.size < count) pageNumber + data.size else null,
-                itemsBefore = pageNumber,
-                itemsAfter = maxOf(0, count - pageNumber - data.size),
+                itemsBefore = if (isRefresh) pageNumber else UNDEF,
+                itemsAfter = if (isRefresh) maxOf(0, count - pageNumber - data.size) else UNDEF,
             ).also {
                 val first = data.firstOrNull()?.id
                 val p = params::class.simpleName?.first()
