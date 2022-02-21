@@ -40,12 +40,16 @@ import paging.android.example.com.pagingsample.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
         private set
-    private val viewModel by viewModels<CheeseViewModel> { CheeseViewModelFactory(application) }
+    private val viewModel by viewModels<CheeseViewModel> { CheeseViewModelFactory(application, firstPos=this.firstPos) }
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var adapter: CheeseAdapter
-    private var firstPos = CheeseDaoLocal.NO_POSITION
+    private var firstPos = 200 // CheeseDaoLocal.NO_POSITION
 
-    private val pagesUpdatedListener: () -> Unit = { initScroll() }
+    private val pagesUpdatedListener: () -> Unit = {
+        val snap = adapter.snapshot()
+        Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: placeholdersBefore=${snap.placeholdersBefore}, placeholdersAfter=${snap.placeholdersAfter}, size=${snap.size}, indices=${snap.indices}")
+//        initScroll()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +66,6 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.allCheeses.collectLatest { adapter.submitData(it) }
         }
-
         adapter.addOnPagesUpdatedListener(pagesUpdatedListener)
 
         initAddButtonListener()
@@ -71,8 +74,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun initScroll() {
         // TODO: does not work
+        val snap = adapter.snapshot()
+        Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: placeholdersBefore=${snap.placeholdersBefore}, placeholdersAfter=${snap.placeholdersAfter}, size=${snap.size}, indices=${snap.indices}")
+
         if (firstPos != CheeseDaoLocal.NO_POSITION) {
-            val relPos = firstPos - adapter.snapshot().placeholdersBefore
+            val relPos = firstPos //- adapter.snapshot().placeholdersBefore
             Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: relative pos = $firstPos - ${adapter.snapshot().placeholdersBefore} = $relPos")
             layoutManager.scrollToPositionWithOffset(relPos, 0)
         }
@@ -116,8 +122,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun jumpToPosition(position: Int) {
-        firstPos = position
-        viewModel.jumpToPosition(position)
+        layoutManager.scrollToPositionWithOffset(position, 0)
     }
 
     private fun initAddButtonListener() {

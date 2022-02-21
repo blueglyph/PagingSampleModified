@@ -16,10 +16,7 @@
 
 package paging.android.example.com.pagingsample
 
-import android.util.ArrayMap
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.map
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 
@@ -27,41 +24,52 @@ import androidx.paging.PagingState
  * Database Access Object mock code for  a locally-generated data source.
  * In reality, [_data] and [data] are never entirely loaded into memory.
  */
-class CheeseDaoLocal {
+class CheeseDaoLocal(initialData: List<String>) {
+    val MAX_SIZE = 500
     companion object {
         val UNDEF = -2147483648
         const val NO_POSITION = -1
     }
-    private val _data = ArrayMap<Int, Cheese>()
-    val data = MutableLiveData <Map<Int, Cheese>>(_data)
-    val sortedData = data.map { data -> data.values.sortedBy { it.name.lowercase() } }
+    private val data = initialData.take(MAX_SIZE).map {
+            val c = Cheese(name = it)
+            Pair(c.id, c)
+        }.toMap().toMutableMap()
+    private var dirtySortedData = true
+    private val _sortedData = ArrayList<Cheese>()
+    private val sortedData: List<Cheese>
+        get() {
+            if (dirtySortedData) {
+                _sortedData.clear()
+                _sortedData.addAll(data.values.sortedBy { it.name.lowercase() })
+                dirtySortedData = false
+            }
+            return _sortedData
+        }
+
+    init {
+        Log.d("CHEESE", "DAO contains ${data.count()} item(s)")
+    }
 
     suspend fun sliceCheeseOrdName(offset: Int, size: Int): List<Cheese> =
-        (sortedData.value ?: listOf()).drop(offset).take(size)
+        sortedData.drop(offset).take(size)
 
     suspend fun insert(cheeses: List<Cheese>) {
+        dirtySortedData = true
         for (item in cheeses)
-            _data[item.id] = item
-        data.postValue(_data)
+            data[item.id] = item
     }
 
     suspend fun insert(cheese: Cheese) {
-        _data[cheese.id] = cheese
-        data.postValue(_data)
+        dirtySortedData = true
+        data[cheese.id] = cheese
     }
 
     suspend fun delete(cheese: Cheese) {
-        _data.remove(cheese.id)
-        data.postValue(_data)
+        dirtySortedData = true
+        data.remove(cheese.id)
     }
 
-    fun findPos(cheese: Cheese): Int {
-        val name = cheese.name.lowercase()
-        val pos = _data.values.count { it.name.lowercase() < name }
-        return pos
-    }
-
-    fun count() = _data.count()
+    fun count() = data.count()
 
     fun getDataSource(pageSize: Int, firstPosition: Int = NO_POSITION): PagingSource<Int, Cheese> {
         val source = CheeseDataSource(this, pageSize, firstPosition)
@@ -74,28 +82,37 @@ class CheeseDaoLocal {
         var firstPosition: Int = NO_POSITION
     ): PagingSource<Int, Cheese>() {
 
+        init {
+            Log.d("CHEESE", "CheeseDataSource.init: firstPosition=$firstPosition")
+        }
         override val jumpingSupported: Boolean
             get() = true
 
+        private fun getPosition(key: Int?): Int {
+            val position = if (firstPosition != NO_POSITION) firstPosition else key ?: 0
+            firstPosition = NO_POSITION
+            return position
+        }
+
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-            val position = if (firstPosition != NO_POSITION) firstPosition else state?.anchorPosition ?: 0
+            val position = getPosition(state.anchorPosition)
             val key = maxOf(0, position - state.config.initialLoadSize / 2)
             Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
             return key
         }
 
         override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Cheese> {
-            val pageNumber = params.key ?: 0
+            val position = getPosition(params.key)
             // Condition: dao content does not vary between these two lines:
             val count = dao.count()
-            val data = dao.sliceCheeseOrdName(pageNumber, params.loadSize)
+            val data = dao.sliceCheeseOrdName(position, params.loadSize)
             val isRefresh = params is LoadParams.Refresh
             return LoadResult.Page(
                 data = data,
-                prevKey = if (pageNumber > 0) maxOf(0, pageNumber - pageSize) else null,
-                nextKey = if (pageNumber + data.size < count) pageNumber + data.size else null,
-                itemsBefore = if (isRefresh) pageNumber else UNDEF,
-                itemsAfter = if (isRefresh) maxOf(0, count - pageNumber - data.size) else UNDEF,
+                prevKey = if (position > 0) maxOf(0, position - pageSize) else null,
+                nextKey = if (position + data.size < count) position + data.size else null,
+                itemsBefore = if (isRefresh) position else UNDEF,
+                itemsAfter = if (isRefresh) maxOf(0, count - position - data.size) else UNDEF,
             ).also {
                 val first = data.firstOrNull()?.id
                 val p = params::class.simpleName?.first()

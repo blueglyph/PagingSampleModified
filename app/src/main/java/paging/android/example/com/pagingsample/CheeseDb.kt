@@ -26,18 +26,12 @@ class CheeseDb {
     fun cheeseDao(): CheeseDaoLocal = dao
 
     init {
-        MainScope().launch(Dispatchers.IO) {
-            for (item in CHEESE_DATA.take(500)
-                .map { Cheese(name = it) }) {
-                dao.insert(item)
-            }
-            Log.d("CHEESE", "DB contains ${dao.count()} item(s)")
-        }
+        Log.d("CHEESE", "DB contains ${CHEESE_DATA.count()} item(s)")
     }
 
     companion object {
         private var instance = CheeseDb()
-        private val dao = CheeseDaoLocal()
+        private val dao = CheeseDaoLocal(CHEESE_DATA)
 
         fun get(context: Context): CheeseDb = instance
     }

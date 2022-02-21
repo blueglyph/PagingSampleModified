@@ -16,6 +16,7 @@
 
 package paging.android.example.com.pagingsample
 
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.paging.*
@@ -28,14 +29,16 @@ import kotlinx.coroutines.launch
 /**
  * A simple [AndroidViewModel] that provides a [Flow]<[PagingData]> of delicious cheeses.
  */
-class CheeseViewModel(private val dao: CheeseDaoLocal) : ViewModel() {
+class CheeseViewModel(
+    private val dao: CheeseDaoLocal,
+    private var firstPos: Int = CheeseDaoLocal.NO_POSITION
+) : ViewModel() {
     val pageSize = 30
     var dataSource: PagingSource<Int, Cheese>? = null
-    var firstPos = CheeseDaoLocal.NO_POSITION
     val allCheeses: Flow<PagingData<CheeseListItem>> = Pager(
         config = PagingConfig(
             pageSize = pageSize,
-            enablePlaceholders = false,
+            enablePlaceholders = true,
             maxSize = 90,
             jumpThreshold = 30
         )
@@ -52,27 +55,23 @@ class CheeseViewModel(private val dao: CheeseDaoLocal) : ViewModel() {
         //.cachedIn(viewModelScope)
 
     init {
-        dao.sortedData.observeForever {
-            dataSource?.invalidate()
-        }
+        Log.d("CHEESE", "CheeseViewModel.init")
+//        dao.sortedData.observeForever {
+//            Log.d("CHEESE", "dao.sortedData.observeForever: invalidating source")
+//        }
     }
 
     fun insert(text: CharSequence) {
         MainScope().launch(Dispatchers.IO) {
             dao.insert(Cheese(name = text.toString()))
-//            dataSource.invalidate()
+            dataSource?.invalidate()
         }
     }
 
     fun remove(cheese: Cheese) {
         MainScope().launch(Dispatchers.IO) {
             dao.delete(cheese)
-//            dataSource.invalidate()
+            dataSource?.invalidate()
         }
-    }
-
-    fun jumpToPosition(position: Int) {
-        firstPos = position
-        dataSource?.invalidate()
     }
 }
