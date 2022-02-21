@@ -71,38 +71,36 @@ class CheeseDaoLocal(initialData: List<String>) {
 
     fun count() = data.count()
 
-    fun getDataSource(pageSize: Int, firstPosition: Int = NO_POSITION): PagingSource<Int, Cheese> {
-        val source = CheeseDataSource(this, pageSize, firstPosition)
+    fun getDataSource(pageSize: Int): PagingSource<Int, Cheese> {
+        val source = CheeseDataSource(this, pageSize)
         return source
     }
 
     private class CheeseDataSource(
         val dao: CheeseDaoLocal,
-        val pageSize: Int,
-        var firstPosition: Int = NO_POSITION
+        val pageSize: Int
     ): PagingSource<Int, Cheese>() {
 
         init {
-            Log.d("CHEESE", "CheeseDataSource.init: firstPosition=$firstPosition")
+            Log.d("CHEESE", "CheeseDataSource.init")
         }
         override val jumpingSupported: Boolean
             get() = true
 
         private fun getPosition(key: Int?): Int {
-            val position = if (firstPosition != NO_POSITION) firstPosition else key ?: 0
-            firstPosition = NO_POSITION
+            val position = key ?: 0
             return position
         }
 
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
-            val position = getPosition(state.anchorPosition)
+            val position = state.anchorPosition ?: 0
             val key = maxOf(0, position - state.config.initialLoadSize / 2)
             Log.d("CHEESE_SRC", "getRefreshKey(state{anchorPosition=${state.anchorPosition}}) -> $key")
             return key
         }
 
         override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Cheese> {
-            val position = getPosition(params.key)
+            val position = params.key ?: 0
             // Condition: dao content does not vary between these two lines:
             val count = dao.count()
             val data = dao.sliceCheeseOrdName(position, params.loadSize)

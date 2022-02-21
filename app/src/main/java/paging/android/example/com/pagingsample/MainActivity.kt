@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private val pagesUpdatedListener: () -> Unit = {
         val snap = adapter.snapshot()
         Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: placeholdersBefore=${snap.placeholdersBefore}, placeholdersAfter=${snap.placeholdersAfter}, size=${snap.size}, indices=${snap.indices}")
+        //layoutManager.scrollToPositionWithOffset(firstPos, 0)
 //        initScroll()
     }
 

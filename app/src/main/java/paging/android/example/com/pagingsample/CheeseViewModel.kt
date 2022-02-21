@@ -41,9 +41,10 @@ class CheeseViewModel(
             enablePlaceholders = true,
             maxSize = 90,
             jumpThreshold = 30
-        )
+        ),
+        initialKey = firstPos
     ) {
-        dataSource = dao.getDataSource(pageSize, firstPos)
+        dataSource = dao.getDataSource(pageSize)
         firstPos = CheeseDaoLocal.NO_POSITION
         dataSource!!
     }.flow
@@ -55,7 +56,7 @@ class CheeseViewModel(
         //.cachedIn(viewModelScope)
 
     init {
-        Log.d("CHEESE", "CheeseViewModel.init")
+        Log.d("CHEESE", "CheeseViewModel.init: firstPos=$firstPos")
 //        dao.sortedData.observeForever {
 //            Log.d("CHEESE", "dao.sortedData.observeForever: invalidating source")
 //        }
