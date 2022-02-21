@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
  */
 class CheeseViewModel(
     private val dao: CheeseDaoLocal,
-    private var firstPos: Int = CheeseDaoLocal.NO_POSITION
 ) : ViewModel() {
     val pageSize = 30
     var dataSource: PagingSource<Int, Cheese>? = null
@@ -42,10 +41,9 @@ class CheeseViewModel(
             maxSize = 90,
             jumpThreshold = 30
         ),
-        initialKey = firstPos
+//        initialKey = firstPos
     ) {
         dataSource = dao.getDataSource(pageSize)
-        firstPos = CheeseDaoLocal.NO_POSITION
         dataSource!!
     }.flow
         .map { pagingData ->
@@ -56,10 +54,7 @@ class CheeseViewModel(
         //.cachedIn(viewModelScope)
 
     init {
-        Log.d("CHEESE", "CheeseViewModel.init: firstPos=$firstPos")
-//        dao.sortedData.observeForever {
-//            Log.d("CHEESE", "dao.sortedData.observeForever: invalidating source")
-//        }
+        Log.d("CHEESE", "CheeseViewModel.init")
     }
 
     fun insert(text: CharSequence) {

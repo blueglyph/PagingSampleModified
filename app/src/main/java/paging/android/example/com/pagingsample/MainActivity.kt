@@ -40,16 +40,13 @@ import paging.android.example.com.pagingsample.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
     lateinit var binding: ActivityMainBinding
         private set
-    private val viewModel by viewModels<CheeseViewModel> { CheeseViewModelFactory(application, firstPos=this.firstPos) }
+    private val viewModel by viewModels<CheeseViewModel> { CheeseViewModelFactory(application) }
     private lateinit var layoutManager: LinearLayoutManager
     private lateinit var adapter: CheeseAdapter
-    private var firstPos = 200 // CheeseDaoLocal.NO_POSITION
 
     private val pagesUpdatedListener: () -> Unit = {
         val snap = adapter.snapshot()
         Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: placeholdersBefore=${snap.placeholdersBefore}, placeholdersAfter=${snap.placeholdersAfter}, size=${snap.size}, indices=${snap.indices}")
-        //layoutManager.scrollToPositionWithOffset(firstPos, 0)
-//        initScroll()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,19 +68,6 @@ class MainActivity : AppCompatActivity() {
 
         initAddButtonListener()
         initSwipeToDelete()
-    }
-
-    private fun initScroll() {
-        // TODO: does not work
-        val snap = adapter.snapshot()
-        Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: placeholdersBefore=${snap.placeholdersBefore}, placeholdersAfter=${snap.placeholdersAfter}, size=${snap.size}, indices=${snap.indices}")
-
-        if (firstPos != CheeseDaoLocal.NO_POSITION) {
-            val relPos = firstPos //- adapter.snapshot().placeholdersBefore
-            Log.d("CHEESE", "adapter.addOnPagesUpdatedListener: relative pos = $firstPos - ${adapter.snapshot().placeholdersBefore} = $relPos")
-            layoutManager.scrollToPositionWithOffset(relPos, 0)
-        }
-        firstPos = CheeseDaoLocal.NO_POSITION
     }
 
     private fun initSwipeToDelete() {

@@ -28,7 +28,6 @@ class CheeseDaoLocal(initialData: List<String>) {
     val MAX_SIZE = 500
     companion object {
         val UNDEF = -2147483648
-        const val NO_POSITION = -1
     }
     private val data = initialData.take(MAX_SIZE).map {
             val c = Cheese(name = it)
@@ -86,11 +85,6 @@ class CheeseDaoLocal(initialData: List<String>) {
         }
         override val jumpingSupported: Boolean
             get() = true
-
-        private fun getPosition(key: Int?): Int {
-            val position = key ?: 0
-            return position
-        }
 
         override fun getRefreshKey(state: PagingState<Int, Cheese>): Int? {
             val position = state.anchorPosition ?: 0
