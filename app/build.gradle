@@ -66,8 +66,11 @@ dependencies {
     implementation "androidx.paging:paging-runtime:$versions.paging"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
 
-    kapt deps.room.compiler
-    implementation deps.room.runtime
+    implementation "androidx.room:room-runtime:$versions.room"
+    kapt "androidx.room:room-compiler:$versions.room"
+
+//    kapt deps.room.compiler
+//    implementation deps.room.runtime
 
     // Android Testing Support Library's runner and rules
     androidTestImplementation deps.atsl.core
